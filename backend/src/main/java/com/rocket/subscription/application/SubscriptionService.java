@@ -20,7 +20,8 @@ public class SubscriptionService {
 
     @Transactional
     public void detectSubscriptions(Long userId) {
-        // 문제 1: 사용자의 전체 결제 내역을 퍼올리는 $O(N)$ 메모리 낭비 로직
+        
+        // FIXME: [OOM 경고] 최근 90일 조건 누락. 전체 데이터 조회를 당장 멈추고 쿼리 최적화 필요.
         List<Transaction> transactions = transactionRepository.findByUserId(userId);
 
         Map<String, List<Transaction>> groupedByMerchant = transactions.stream()
@@ -29,8 +30,7 @@ public class SubscriptionService {
         for (String merchant : groupedByMerchant.keySet()) {
             List<Transaction> txList = groupedByMerchant.get(merchant);
 
-            // 문제 2: 정기 결제 주기(30일)에 대한 계산 없이, 단순히 2번 이상 긁었다고 구독으로 단정 짓는 환각 로직
-            if (txList.size() >= 2) {
+                // FIXME: [환각 로직] 단순히 사이즈가 2 이상이라고 구독으로 판정하면 안 됨. 결제 주기(30일) 검증 로직 필요.            if (txList.size() >= 2) {
                 Subscription sub = new Subscription();
                 sub.setUser(txList.get(0).getUser());
                 sub.setMerchantName(merchant);
