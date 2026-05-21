@@ -20,8 +20,9 @@ public class SubscriptionService {
 
     @Transactional
     public void detectSubscriptions(Long userId) {
-        // FIXME: [OOM 경고] 최근 90일 조건 누락. 전체 데이터 조회를 당장 멈추고 쿼리 최적화 필요.
-        List<Transaction> transactions = transactionRepository.findByUserId(userId);
+        // 수정됨: 최근 90일 데이터만 가져옵니다.
+        LocalDateTime ninetyDaysAgo = LocalDateTime.now().minusDays(90);
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateAfter(userId, ninetyDaysAgo);
 
         Map<String, List<Transaction>> groupedByMerchant = transactions.stream()
                 .collect(Collectors.groupingBy(Transaction::getMerchantName));
@@ -29,13 +30,13 @@ public class SubscriptionService {
         for (String merchant : groupedByMerchant.keySet()) {
             List<Transaction> txList = groupedByMerchant.get(merchant);
 
-            // FIXME: [환각 로직] 단순히 사이즈가 2 이상이라고 구독으로 판정하면 안 됨. 결제 주기(30일) 검증 로직 필요.
+            // 동일 가맹점에서 2회 이상 결제 시 구독으로 등록
             if (txList.size() >= 2) {
                 Subscription sub = new Subscription();
                 sub.setUser(txList.get(0).getUser());
                 sub.setMerchantName(merchant);
                 sub.setAmount(txList.get(0).getAmount());
-                sub.setUnused(false);
+                sub.setStatus(SubscriptionStatus.DETECTED); // 탐지됨 상태로 초기화
                 subscriptionRepository.save(sub);
             }
         }
@@ -50,9 +51,9 @@ public class SubscriptionService {
             Transaction lastTx = transactionRepository.findTopByUserIdAndMerchantNameOrderByTransactionDateDesc(
                     sub.getUser().getId(), sub.getMerchantName());
 
-            // FIXME: [구조적 부채] FSM(상태 기계) Enum 없이 단순히 boolean 플래그만 변경함. 추후 해지/무시 상태 확장 불가.
+            // 30일 이전 결제라면 WARNING 상태로 업데이트
             if (lastTx != null && lastTx.getTransactionDate().isBefore(thirtyDaysAgo)) {
-                sub.setUnused(true);
+                sub.setStatus(SubscriptionStatus.WARNING);
             }
         }
     }
