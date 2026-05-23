@@ -7,8 +7,9 @@ import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // OOM 방지: 특정 날짜(90일 전) 이후의 데이터만 조회하는 메서드로 변경
-    List<Transaction> findByUserIdAndTransactionDateAfter(Long userId, LocalDateTime startDate);
+    // [OOM 원천 차단] 특정 사용자의 기준일(90일 전) 이후 결제 내역만 시간순으로 조회
+    List<Transaction> findByUserIdAndTransactionDateAfterOrderByTransactionDateAsc(Long userId, LocalDateTime startDate);
 
+    // 특정 가맹점의 가장 최근 결제 내역 조회 (미사용 구독 검증용)
     Transaction findTopByUserIdAndMerchantNameOrderByTransactionDateDesc(Long userId, String merchantName);
 }
