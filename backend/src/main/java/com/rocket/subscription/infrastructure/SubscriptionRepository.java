@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
-    // 상태 변경 검사를 위해 DETECTED 상태인 구독만 조회
+
     List<Subscription> findAllByStatus(SubscriptionStatus status);
+    List<Subscription> findByUserId(Long userId);
 }

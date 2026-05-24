@@ -39,23 +39,34 @@ public class SubscriptionService {
 
         // 3. 탐지된 내역이 있다면 영속화 및 알림 서비스 호출
         if (!detectedList.isEmpty()) {
-            subscriptionRepository.saveAll(detectedList);
 
-            // 4. Scheduler(Service) -> NotificationService : 알림 발송
-            notificationService.sendAlert(userId, detectedList);
+            // 해지(CANCELED) 및 무시(IGNORED) 처리된 내역도 포함하여 과거 내역으로 인한 중복 탐지 방지
+            List<String> existingMerchants = subscriptionRepository.findByUserId(userId)
+                    .stream()
+                    .map(Subscription::getMerchantName)
+                    .toList();
+
+            // 이미 한 번이라도 탐지되어 DB에 존재하는 가맹점은 새로운 구독으로 추가하지 않음
+            List<Subscription> newSubscriptions = detectedList.stream()
+                    .filter(sub -> !existingMerchants.contains(sub.getMerchantName()))
+                    .toList();
+            if (!newSubscriptions.isEmpty()) {
+                subscriptionRepository.saveAll(newSubscriptions);
+                notificationService.sendAlert(userId, newSubscriptions);
+            }
         }
     }
 
     @Transactional
     public void checkUnusedSubscriptions() {
         List<Subscription> detectedSubscriptions = subscriptionRepository.findAllByStatus(SubscriptionStatus.DETECTED);
-        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        LocalDateTime thresholdDate = LocalDateTime.now().minusDays(40);
 
         for (Subscription sub : detectedSubscriptions) {
             Transaction lastTx = transactionRepository.findTopByUserIdAndMerchantNameOrderByTransactionDateDesc(
                     sub.getUser().getId(), sub.getMerchantName());
 
-            if (lastTx != null && lastTx.getTransactionDate().isBefore(thirtyDaysAgo)) {
+            if (lastTx != null && lastTx.getTransactionDate().isBefore(thresholdDate)) {
                 sub.updateToWarning(); // FSM 보호 조건 검증 후 상태 변경
             }
         }
