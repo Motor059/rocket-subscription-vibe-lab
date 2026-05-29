@@ -19,9 +19,9 @@ public class SubscriptionDetector {
     public List<Subscription> analyze(User user, List<Transaction> transactions) {
         List<Subscription> detectedSubscriptions = new ArrayList<>();
 
-        // 1. 가맹점명 기준 1차 그룹화
+        // 1. 가맹점명 기준 1차 그룹화 (대소문자 통일 및 양옆 공백 제거 정규화 적용)
         Map<String, List<Transaction>> groupedByMerchant = transactions.stream()
-                .collect(Collectors.groupingBy(Transaction::getMerchantName));
+                    .collect(Collectors.groupingBy(tx -> tx.getMerchantName().trim().toUpperCase()));
 
         for (Map.Entry<String, List<Transaction>> entry : groupedByMerchant.entrySet()) {
             String merchantName = entry.getKey();
