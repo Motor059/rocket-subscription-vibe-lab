@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/rocket-subscription-vibe-labs.iml" filepath="$PROJECT_DIR$/.idea/rocket-subscription-vibe-labs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/subscription.main.iml" filepath="$PROJECT_DIR$/.idea/modules/subscription.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/subscription.test.iml" filepath="$PROJECT_DIR$/.idea/modules/subscription.test.iml" />
     </modules>
   </component>
 </project>
