@@ -49,4 +49,26 @@ class SubscriptionDetectorTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getMerchantName()).isEqualTo("NETFLIX");
     }
+
+    @Test
+    @DisplayName("Scenario 2: 결제 금액이 ±10% 이내로 변경되어도 하나의 정기 구독으로 묶여야 한다.")
+    void test_amount_tolerance() {
+        // given
+        User user = User.create("테스트유저");
+        LocalDateTime now = LocalDateTime.now();
+
+        // 딱 2건만 넣습니다. 요금이 변경된 경우! (10,000원 -> 10,500원 5% 인상)
+        List<Transaction> transactions = List.of(
+                Transaction.create(user, "NETFLIX", 10000, now.minusDays(30)),
+                Transaction.create(user, "NETFLIX", 10500, now)
+        );
+
+        // when
+        List<Subscription> result = detector.analyze(user, transactions);
+
+        // then
+        // 금액이 다르더라도 오차(10%) 이내이므로 1개의 구독으로 묶여야 합니다.
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getAmount()).isEqualTo(10500);
+    }
 }
