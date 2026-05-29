@@ -47,11 +47,19 @@ public class Subscription {
     }
 
     public void cancel() {
-        if (this.status != SubscriptionStatus.WARNING) {
-            throw new IllegalStateException("오직 WARNING 상태에서만 CANCELED(해지)로 전이할 수 있습니다.");
+        // 1. 방어 로직: 이제 막 탐지된(DETECTED) 상태에서 강제 해지는 불가 (테스트 통과를 위한 핵심 방어선)
+        if (this.status == SubscriptionStatus.DETECTED) {
+            throw new IllegalStateException("아직 확정되지 않은 구독은 해지할 수 없습니다. 구독 무시(IGNORE)를 이용해주세요.");
         }
+        
+        // 2. 방어 로직: 이미 종료된 상태(CANCELED, IGNORED)에서 또 해지 시도 불가
+        if (this.status == SubscriptionStatus.CANCELED || this.status == SubscriptionStatus.IGNORED) {
+            throw new IllegalStateException("이미 종료된 구독입니다.");
+        }
+
+        // 3. 정상 처리: 활성화(CONFIRMED)되거나 경고(WARNING) 상태인 경우에만 해지 허용
         this.status = SubscriptionStatus.CANCELED;
-    }
+    } 
 
     public void ignore() {
         if (this.status == SubscriptionStatus.CANCELED || this.status == SubscriptionStatus.IGNORED) {
