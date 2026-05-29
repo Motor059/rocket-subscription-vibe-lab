@@ -71,4 +71,46 @@ class SubscriptionDetectorTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getAmount()).isEqualTo(10500);
     }
+    @Test
+    @DisplayName("Scenario 1: 90일이 지난 과거의 결제 내역은 정기구독 탐지 대상에서 제외되어야 한다.")
+    void test_90_days_boundary() {
+        // given
+        User user = User.create("테스트유저");
+        LocalDateTime now = LocalDateTime.now();
+
+        // 91일 전 결제, 60일 전 결제 
+        // (간격은 31일이므로 주기는 맞지만, 91일 전 데이터가 무효 처리되어야 함)
+        List<Transaction> transactions = List.of(
+                Transaction.create(user, "YOUTUBE", 10450, now.minusDays(91)),
+                Transaction.create(user, "YOUTUBE", 10450, now.minusDays(60))
+        );
+
+        // when
+        List<Subscription> result = detector.analyze(user, transactions);
+
+        // then
+        // 91일 전 데이터가 필터링되어 유효한 결제가 1건(60일 전)만 남으므로 탐지되지 않아야 함
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Scenario 3: 결제 간격이 25일 미만(24일)인 경우 정기구독으로 탐지하지 않아야 한다.")
+    void test_minimum_period_boundary() {
+        // given
+        User user = User.create("테스트유저");
+        LocalDateTime now = LocalDateTime.now();
+
+        // 54일 전 결제, 30일 전 결제 (간격 딱 24일)
+        List<Transaction> transactions = List.of(
+                Transaction.create(user, "MELON", 7900, now.minusDays(54)),
+                Transaction.create(user, "MELON", 7900, now.minusDays(30))
+        );
+
+        // when
+        List<Subscription> result = detector.analyze(user, transactions);
+
+        // then
+        // 최소 인정 주기(25일)에 미달하므로 정기구독으로 묶이지 않아야 함
+        assertThat(result).isEmpty();
+    }
 }
