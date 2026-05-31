@@ -1,4 +1,4 @@
-export type SubscriptionStatus = 'DETECTED' | 'WARNING' | 'CANCELED' | 'IGNORED';
+export type SubscriptionStatus = 'DETECTED' | 'CONFIRMED' | 'WARNING' | 'CANCELED' | 'IGNORED';
 
 export interface Subscription {
   id: number;
@@ -6,14 +6,4 @@ export interface Subscription {
   amount: number;
   status: SubscriptionStatus;
   lastTransactionDate?: string;
-}
-
-export interface ActionResponse {
-  id: number;
-  status: SubscriptionStatus;
-}
-
-export interface DetectResponse {
-  message: string;
-  detectedCount: number;
 }
