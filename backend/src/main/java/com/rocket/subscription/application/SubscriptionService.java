@@ -67,7 +67,7 @@ public class SubscriptionService {
         int warningCount = 0;
 
         for (Subscription sub : detectedSubscriptions) {
-            Transaction lastTx = transactionRepository.findTopByUserIdAndMerchantNameOrderByTransactionDateDesc(
+            Transaction lastTx = transactionRepository.findTopByUserIdAndMerchantNameIgnoreCaseOrderByTransactionDateDesc(
                     sub.getUser().getId(), sub.getMerchantName());
 
             if (lastTx != null && lastTx.getTransactionDate().isBefore(thresholdDate)) {

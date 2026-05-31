@@ -31,7 +31,7 @@ public class SubscriptionController {
         // 엔티티를 DTO로 변환 + 가장 최근 결제일(lastTransactionDate) 조합
         List<SubscriptionResponse> response = subscriptions.stream()
                 .map(sub -> {
-                    var lastTx = transactionRepository.findTopByUserIdAndMerchantNameOrderByTransactionDateDesc(
+                    var lastTx = transactionRepository.findTopByUserIdAndMerchantNameIgnoreCaseOrderByTransactionDateDesc(
                             userId, sub.getMerchantName());
                     var lastTxDate = (lastTx != null) ? lastTx.getTransactionDate() : null;
 

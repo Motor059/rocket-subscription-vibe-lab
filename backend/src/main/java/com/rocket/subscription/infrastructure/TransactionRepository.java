@@ -10,6 +10,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // [OOM 원천 차단] 특정 사용자의 기준일(90일 전) 이후 결제 내역만 시간순으로 조회
     List<Transaction> findByUserIdAndTransactionDateAfterOrderByTransactionDateAsc(Long userId, LocalDateTime startDate);
 
-    // 특정 가맹점의 가장 최근 결제 내역 조회 (미사용 구독 검증용)
-    Transaction findTopByUserIdAndMerchantNameOrderByTransactionDateDesc(Long userId, String merchantName);
+    // [수정됨] 대소문자 무시(IgnoreCase) 키워드 추가
+    Transaction findTopByUserIdAndMerchantNameIgnoreCaseOrderByTransactionDateDesc(Long userId, String merchantName);
 }
